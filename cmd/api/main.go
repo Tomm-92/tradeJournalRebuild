@@ -19,7 +19,10 @@ type config struct {
 	port int
 	env  string
 	db   struct {
-		dsn string
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
 	}
 }
 
@@ -36,7 +39,12 @@ func main() {
 	flag.StringVar(&cfg.env, "env", "development", "Environment(development|staging|production)")
 
 	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("TRADEJOURNAL_DB_DSN"), "PostgreSQL DSN")
+	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
+	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQLmax idle connections")
+	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15", "PostgreSQL max connection idle time")
+
 	flag.Parse()
+
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
 	db, err := openDB(cfg)
@@ -45,7 +53,6 @@ func main() {
 	}
 
 	defer db.Close()
-
 	logger.Printf("database connection pool established")
 
 	app := &application{
